@@ -9,6 +9,7 @@
 #import "PBGitCommitController.h"
 #import "NSFileHandleExt.h"
 #import "PBChangedFile.h"
+#import "PBDebounce.h"
 #import "PBWebChangesController.h"
 #import "PBGitIndex.h"
 #import "PBGitRepositoryWatcher.h"
@@ -37,6 +38,8 @@
 
 	IBOutlet PBWebChangesController *webController;
 	IBOutlet NSSplitView *commitSplitView;
+	
+	NSInteger refreshDebounceGeneration;
 }
 
 @property (weak) IBOutlet NSTableView *unstagedTable;
@@ -241,6 +244,13 @@
 }
 
 - (IBAction)refresh:(id)sender
+{
+	PBDebounce(&refreshDebounceGeneration, 1.0, ^{
+		[self _refresh];
+	});
+}
+
+- (void)_refresh
 {
 	self.isBusy = YES;
 	self.status = NSLocalizedString(@"Refreshing index…", @"Message in status bar while the index is refreshing");
